@@ -4,50 +4,132 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var Point = Phaser.Point;
 var mainState = (function (_super) {
     __extends(mainState, _super);
     function mainState() {
         _super.apply(this, arguments);
         this.ACCELERATION = 100;
-        this.COCHE_MAX_VELOCITY = 400;
         this.LIVES = 3;
         this.TEXT_MARGIN = 50;
+        this.contador = 0;
         this.score = 0;
     }
     mainState.prototype.preload = function () {
         _super.prototype.preload.call(this);
-        //this.load.image('background', 'assets/Backgrounds/background.png');
-        this.load.image('background', 'assets/Backgrounds/background.png');
+        //this.load.image('carretera', 'assets/Backgrounds/carretera.png');
+        this.load.image('ladoderecho', 'assets/Backgrounds/background2.png');
+        this.load.image('ladoizquierdo', 'assets/Backgrounds/background1.png');
+        this.load.image('carretera', 'assets/Backgrounds/carretera.png');
         this.load.image('coche', 'assets/PNG/coche.png');
+        this.load.image('camion', 'assets/PNG/camion.png');
+        this.load.image('coche1', 'assets/PNG/coches_normales1.jpg');
+        this.load.image('coche2', 'assets/PNG/coches_normales2.jpg');
+        this.load.image('coche3', 'assets/PNG/coches_normales3.jpg');
+        this.load.image('pickup1', 'assets/PNG/coches_pikups1.png');
+        this.load.image('pickup2', 'assets/PNG/coches_pikups2.png');
+        this.load.image('pickup3', 'assets/PNG/coches_pikups-3.png');
+        this.load.image('pickup4', 'assets/PNG/coches_pikups-4.png');
         this.physics.startSystem(Phaser.Physics.ARCADE);
     };
     mainState.prototype.create = function () {
         _super.prototype.create.call(this);
         this.crearBackground();
+        this.vehiculoConfig();
         this.crearCoche();
         this.createTexts();
         this.physics.enable(this.coche, Phaser.Physics.ARCADE);
         this.cursors = this.input.keyboard.createCursorKeys();
-        //this.background = this.add.sprite(this.world.centerX, this.world.centerY, 'background');
-        //this.background.anchor.setTo(0.5, 0.5);
+        this.game.time.events.loop(Phaser.Timer.SECOND, this.actualizarContador, this);
+        //this.carretera = this.add.sprite(this.world.centerX, this.world.centerY, 'carretera');
+        //this.carretera.anchor.setTo(0.5, 0.5);
     };
     mainState.prototype.update = function () {
         _super.prototype.update.call(this);
         this.cocheMover();
+        this.moverCoches();
+        this.actualizarContador();
+        this.colisiones();
+        if (this.contador == 2) {
+            this.crearVehiculos();
+            this.contador = 0;
+        }
+        this.carretera.tilePosition.y += 2;
+    };
+    mainState.prototype.vehiculoConfig = function () {
+        this.vehiculos = this.add.group();
+        this.vehiculos.enableBody = true;
+    };
+    mainState.prototype.colisiones = function () {
+        this.physics.arcade.overlap(this.coche, this.vehiculos, this.cocheTocaCoche, null, this);
+        this.physics.arcade.overlap(this.coche, this.carretera, this.irCarretera, null, this);
+        this.physics.arcade.overlap(this.coche, this.ladoD, this.fueraCarreteraD, null, this);
+        this.physics.arcade.overlap(this.coche, this.ladoI, this.fueraCarreteraI, null, this);
+    };
+    mainState.prototype.fueraCarreteraI = function (coche, ladoI) {
+        this.score = this.score - 1;
+        this.scoreText.setText("Puntuacion: " + this.score);
+    };
+    mainState.prototype.fueraCarreteraD = function (coche, ladoD) {
+        this.score = this.score - 1;
+        this.scoreText.setText("Puntuacion: " + this.score);
+    };
+    mainState.prototype.irCarretera = function (coche, carretera) {
+        this.score = this.score + 1;
+        this.scoreText.setText("Puntuacion: " + this.score);
     };
     mainState.prototype.crearVehiculos = function () {
+        var coches = [
+            'coche1',
+            'camion',
+            'coche2',
+            'coche3',
+            'pickup1',
+            'pickup2',
+            'pickup3',
+            'pickup4'
+        ];
+        var posiCoche = [
+            new Point(this.world.centerX, -20),
+            new Point(this.world.centerX, -50),
+        ];
+        var pos = this.rnd.pick(posiCoche);
+        var x = pos.x;
+        var y = pos.y;
+        var random = this.rnd.pick(coches);
+        var cocheBajan = new vehiculo(this.game, x, y, random, null);
+        this.add.existing(cocheBajan);
+        this.vehiculos.add(cocheBajan);
+        if (this.LIVES == 0) {
+        }
     };
     ;
+    mainState.prototype.moverCoches = function () {
+        this.vehiculos.setAll("body.velocity.y", 50);
+    };
     mainState.prototype.crearBackground = function () {
-        this.background = this.add.image(this.world.centerX, this.world.centerY, 'background');
-        this.background.anchor.setTo(0.5, 0.5);
+        /*this.carretera = this.add.image(this.world.centerX, this.world.centerY, 'carretera');
+         this.carretera.anchor.setTo(0.5, 0.5);*/
+        this.carretera = this.game.add.tileSprite(0, 0, 480, 450, 'carretera');
+        this.ladoI = this.add.sprite(0, 0, 'ladoizquierdo');
+        this.ladoD = this.add.sprite(405, 0, 'ladoderecho');
+        this.game.physics.enable(this.carretera, Phaser.Physics.ARCADE);
+        this.game.physics.enable(this.ladoD, Phaser.Physics.ARCADE);
+        this.game.physics.enable(this.ladoI, Phaser.Physics.ARCADE);
+        this.carretera.body.allowGravity = false;
+        this.carretera.body.immovable = true;
+        this.ladoD.body.allowGravity = false;
+        this.ladoD.body.immovable = true;
+        this.ladoI.body.allowGravity = false;
+        this.ladoI.body.immovable = true;
     };
     mainState.prototype.cocheTocaCoche = function (coche, vehiculo) {
         vehiculo.kill();
-        coche.damage(1);
-        this.livesText.setText("Lives: " + this.coche.health);
+        this.LIVES = this.LIVES - 1;
+        this.livesText.setText("Lives: " + this.LIVES);
         this.blink(coche);
-        if (coche.health == 0) {
+        if (this.LIVES == 0) {
+            coche.kill();
             this.stateText.text = " GAME OVER \n Click to restart";
             this.stateText.visible = true;
             this.input.onTap.addOnce(this.restart, this);
@@ -61,6 +143,8 @@ var mainState = (function (_super) {
         tween.start();
     };
     mainState.prototype.restart = function () {
+        this.score = 0;
+        this.LIVES = 0;
         this.game.state.restart();
     };
     mainState.prototype.createTexts = function () {
@@ -68,7 +152,7 @@ var mainState = (function (_super) {
         var height = this.scale.bounds.height;
         this.scoreText = this.add.text(this.TEXT_MARGIN, this.TEXT_MARGIN, 'Puntuacion: ' + this.score, { font: "30px Arial", fill: "#ffffff" });
         this.scoreText.fixedToCamera = true;
-        this.livesText = this.add.text(width - this.TEXT_MARGIN, this.TEXT_MARGIN, 'Vidas: ' + this.coche.health, { font: "30px Arial", fill: "#ffffff" });
+        this.livesText = this.add.text(width - this.TEXT_MARGIN, this.TEXT_MARGIN, 'Vidas: ' + this.LIVES, { font: "30px Arial", fill: "#ffffff" });
         this.livesText.anchor.setTo(1, 0);
         this.livesText.fixedToCamera = true;
         this.stateText = this.add.text(width / 2, height / 2, '', { font: '84px Arial', fill: '#fff' });
@@ -78,9 +162,8 @@ var mainState = (function (_super) {
     };
     ;
     mainState.prototype.crearCoche = function () {
-        this.coche = this.add.sprite(this.world.centerX, this.world.centerY, 'coche');
+        this.coche = this.add.sprite(this.world.centerX + 50, 500, 'coche');
         this.coche.anchor.setTo(0.5, 0.5);
-        this.coche.health = this.LIVES;
         this.physics.enable(this.coche, Phaser.Physics.ARCADE);
         this.coche.body.collideWorldBounds = true;
         this.coche.checkWorldBounds = true;
@@ -104,17 +187,31 @@ var mainState = (function (_super) {
         }
     };
     ;
+    mainState.prototype.actualizarContador = function () {
+        this.contador++;
+    };
     return mainState;
 })(Phaser.State);
-var ShooterGame = (function () {
-    function ShooterGame() {
-        this.game = new Phaser.Game(600, 450, Phaser.AUTO, 'gameDiv');
+var vehiculo = (function (_super) {
+    __extends(vehiculo, _super);
+    function vehiculo(game, x, y, key, frame) {
+        _super.call(this, game, x, y, key, frame);
+        // Activamos las fisicas
+        this.game.physics.enable(this, Phaser.Physics.ARCADE);
+        this.body.immovable = true;
+        this.body.allowGravity = false;
+    }
+    return vehiculo;
+})(Phaser.Sprite);
+var CarWalk = (function () {
+    function CarWalk() {
+        this.game = new Phaser.Game(598, 450, Phaser.AUTO, 'gameDiv');
         this.game.state.add('main', mainState);
         this.game.state.start('main');
     }
-    return ShooterGame;
+    return CarWalk;
 })();
 window.onload = function () {
-    var game = new ShooterGame();
+    var game = new CarWalk();
 };
 //# sourceMappingURL=main.js.map
