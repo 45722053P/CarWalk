@@ -183,17 +183,18 @@ class mainState extends Phaser.State {
 
         this.physics.arcade.collide(this.coche,this.vehiculos,this.cocheTocaCoche,null,this);
 
-        if(this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
-            this.score += 5;
-            this.scoreText.setText("Puntuacion: " + this.score);
+        while(this.LIVES>=1){
+            if(this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
+                this.score += 5;
+                this.scoreText.setText("Puntuacion: " + this.score);
 
-        }else if(!this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
+            }else if(!this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
 
-            this.score -= 10;
-            this.scoreText.setText("Puntuacion: " + this.score);
+                this.score -= 10;
+                this.scoreText.setText("Puntuacion: " + this.score);
 
+            }
         }
-
     }
 
 
