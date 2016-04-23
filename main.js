@@ -9,7 +9,7 @@ var mainState = (function (_super) {
     __extends(mainState, _super);
     function mainState() {
         _super.apply(this, arguments);
-        this.ACCELERATION = 100;
+        this.ACCELERATION = 500;
         this.LIVES = 3;
         this.TEXT_MARGIN = 50;
         this.contador = 0;
@@ -23,7 +23,7 @@ var mainState = (function (_super) {
         this.load.image('carretera', 'assets/Backgrounds/carretera.png');
         this.load.image('coche', 'assets/PNG/coche.png');
         this.load.image('camion', 'assets/PNG/camion.png');
-        this.load.image('coche1', 'assets/PNG/coches_normales1.jpg');
+        this.load.image('coche1', 'assets/PNG/coches_normales1.png');
         this.load.image('coche2', 'assets/PNG/coches_normales2.jpg');
         this.load.image('coche3', 'assets/PNG/coches_normales3.jpg');
         this.load.image('pickup1', 'assets/PNG/coches_pikups1.png');
@@ -38,50 +38,71 @@ var mainState = (function (_super) {
         this.vehiculoConfig();
         this.crearCoche();
         this.createTexts();
+        this.game.time.events.loop(Phaser.Timer.SECOND, this.actualizarContador, this);
         this.physics.enable(this.coche, Phaser.Physics.ARCADE);
         this.cursors = this.input.keyboard.createCursorKeys();
-        this.game.time.events.loop(Phaser.Timer.SECOND, this.actualizarContador, this);
+        this.crearVehiculos();
         //this.carretera = this.add.sprite(this.world.centerX, this.world.centerY, 'carretera');
         //this.carretera.anchor.setTo(0.5, 0.5);
     };
     mainState.prototype.update = function () {
         _super.prototype.update.call(this);
         this.cocheMover();
-        this.moverCoches();
-        this.actualizarContador();
         this.colisiones();
-        if (this.contador == 2) {
+        if (this.contador == 3) {
             this.crearVehiculos();
             this.contador = 0;
         }
-        this.carretera.tilePosition.y += 2;
+        this.moverCoches();
+        this.carretera.tilePosition.y += 4;
+        this.ladoD.tilePosition.y += 3;
+        this.ladoI.tilePosition.y += 3;
     };
     mainState.prototype.vehiculoConfig = function () {
         this.vehiculos = this.add.group();
         this.vehiculos.enableBody = true;
     };
     mainState.prototype.colisiones = function () {
-        this.physics.arcade.overlap(this.coche, this.vehiculos, this.cocheTocaCoche, null, this);
-        this.physics.arcade.overlap(this.coche, this.carretera, this.irCarretera, null, this);
-        this.physics.arcade.overlap(this.coche, this.ladoD, this.fueraCarreteraD, null, this);
-        this.physics.arcade.overlap(this.coche, this.ladoI, this.fueraCarreteraI, null, this);
+        this.physics.arcade.collide(this.coche, this.vehiculos, this.cocheTocaCoche, null, this);
+        if (this.physics.arcade.overlap(this.coche, this.carretera, this.irCarretera, null, this)) {
+            this.score += 5;
+            this.scoreText.setText("Puntuacion: " + this.score);
+        }
+        else if (!this.physics.arcade.overlap(this.coche, this.carretera, this.irCarretera, null, this)) {
+            this.score -= 5;
+            this.scoreText.setText("Puntuacion: " + this.score);
+        }
+        //this.physics.arcade.overlap(this.coche,this.ladoD,this.fueraCarreteraD,null,this);
+        //this.physics.arcade.overlap(this.coche,this.ladoI,this.fueraCarreteraI,null,this);
     };
-    mainState.prototype.fueraCarreteraI = function (coche, ladoI) {
-        this.score = this.score - 1;
-        this.scoreText.setText("Puntuacion: " + this.score);
-    };
-    mainState.prototype.fueraCarreteraD = function (coche, ladoD) {
-        this.score = this.score - 1;
-        this.scoreText.setText("Puntuacion: " + this.score);
-    };
+    /* private fueraCarreteraI(coche:Phaser.Sprite,ladoI:Phaser.TileSprite){
+ 
+         if(coche.x>this.world.centerX+105){
+ 
+             this.score -= 1;
+             this.scoreText.setText("Puntuacion: " + this.score);
+ 
+         }
+ 
+     }
+ 
+     private fueraCarreteraD(coche:Phaser.Sprite, ladoD:Phaser.TileSprite) {
+ 
+         if(coche.x>this.world.centerX-105){
+ 
+             this.score -= 1;
+             this.scoreText.setText("Puntuacion: " + this.score);
+ 
+         }
+ 
+     }*/
     mainState.prototype.irCarretera = function (coche, carretera) {
-        this.score = this.score + 1;
+        this.score += 5;
         this.scoreText.setText("Puntuacion: " + this.score);
     };
     mainState.prototype.crearVehiculos = function () {
         var coches = [
             'coche1',
-            'camion',
             'coche2',
             'coche3',
             'pickup1',
@@ -90,8 +111,8 @@ var mainState = (function (_super) {
             'pickup4'
         ];
         var posiCoche = [
-            new Point(this.world.centerX, -20),
-            new Point(this.world.centerX, -50),
+            new Point(this.world.centerX - 50, -100),
+            new Point(this.world.centerX + 50, -100),
         ];
         var pos = this.rnd.pick(posiCoche);
         var x = pos.x;
@@ -100,19 +121,17 @@ var mainState = (function (_super) {
         var cocheBajan = new vehiculo(this.game, x, y, random, null);
         this.add.existing(cocheBajan);
         this.vehiculos.add(cocheBajan);
-        if (this.LIVES == 0) {
-        }
     };
     ;
     mainState.prototype.moverCoches = function () {
-        this.vehiculos.setAll("body.velocity.y", 50);
+        this.vehiculos.setAll("body.velocity.y", Math.floor((Math.random() * 150) + 50));
     };
     mainState.prototype.crearBackground = function () {
         /*this.carretera = this.add.image(this.world.centerX, this.world.centerY, 'carretera');
          this.carretera.anchor.setTo(0.5, 0.5);*/
-        this.carretera = this.game.add.tileSprite(0, 0, 480, 450, 'carretera');
-        this.ladoI = this.add.sprite(0, 0, 'ladoizquierdo');
-        this.ladoD = this.add.sprite(405, 0, 'ladoderecho');
+        this.ladoI = this.game.add.tileSprite(0, 0, 198, 449, 'ladoizquierdo');
+        this.carretera = this.game.add.tileSprite(198, 0, 210, 450, 'carretera');
+        this.ladoD = this.game.add.tileSprite(405, 0, 192, 450, 'ladoderecho');
         this.game.physics.enable(this.carretera, Phaser.Physics.ARCADE);
         this.game.physics.enable(this.ladoD, Phaser.Physics.ARCADE);
         this.game.physics.enable(this.ladoI, Phaser.Physics.ARCADE);
@@ -144,7 +163,7 @@ var mainState = (function (_super) {
     };
     mainState.prototype.restart = function () {
         this.score = 0;
-        this.LIVES = 0;
+        this.LIVES = 3;
         this.game.state.restart();
     };
     mainState.prototype.createTexts = function () {

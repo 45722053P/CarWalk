@@ -7,8 +7,8 @@ class mainState extends Phaser.State {
 
 
     private carretera:Phaser.TileSprite;
-    private ladoI:Phaser.Sprite;
-    private ladoD:Phaser.Sprite;
+    private ladoI:Phaser.TileSprite;
+    private ladoD:Phaser.TileSprite;
 
     private cursors:Phaser.CursorKeys;
     private vehiculos:Phaser.Group;
@@ -17,7 +17,7 @@ class mainState extends Phaser.State {
     private livesText:Phaser.Text;
     private stateText:Phaser.Text;
 
-    private ACCELERATION:number = 100;
+    private ACCELERATION:number = 500;
     private LIVES = 3;
     private TEXT_MARGIN = 50;
 
@@ -37,7 +37,7 @@ class mainState extends Phaser.State {
         this.load.image('coche', 'assets/PNG/coche.png');
 
         this.load.image('camion', 'assets/PNG/camion.png');
-        this.load.image('coche1', 'assets/PNG/coches_normales1.jpg');
+        this.load.image('coche1', 'assets/PNG/coches_normales1.png');
         this.load.image('coche2', 'assets/PNG/coches_normales2.jpg');
         this.load.image('coche3', 'assets/PNG/coches_normales3.jpg');
         this.load.image('pickup1', 'assets/PNG/coches_pikups1.png');
@@ -58,6 +58,7 @@ class mainState extends Phaser.State {
         this.vehiculoConfig();
         this.crearCoche();
         this.createTexts();
+        this.game.time.events.loop(Phaser.Timer.SECOND, this.actualizarContador, this);
 
 
 
@@ -65,8 +66,8 @@ class mainState extends Phaser.State {
 
         this.physics.enable(this.coche, Phaser.Physics.ARCADE);
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.crearVehiculos();
 
-        this.game.time.events.loop(Phaser.Timer.SECOND, this.actualizarContador, this);
 
         //this.carretera = this.add.sprite(this.world.centerX, this.world.centerY, 'carretera');
         //this.carretera.anchor.setTo(0.5, 0.5);
@@ -76,18 +77,19 @@ class mainState extends Phaser.State {
 
     update():void {
         super.update();
-
         this.cocheMover();
-        this.moverCoches();
-        this.actualizarContador();
         this.colisiones();
-
         if(this.contador == 2){
             this.crearVehiculos();
             this.contador=0;
         }
 
-        this.carretera.tilePosition.y += 2;
+        this.moverCoches();
+
+
+        this.carretera.tilePosition.y += 4;
+        this.ladoD.tilePosition.y += 3;
+        this.ladoI.tilePosition.y += 3;
 
 
     }
@@ -101,32 +103,28 @@ class mainState extends Phaser.State {
 
     private colisiones(){
 
-        this.physics.arcade.overlap(this.coche,this.vehiculos,this.cocheTocaCoche,null,this);
-        this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this);
-        this.physics.arcade.overlap(this.coche,this.ladoD,this.fueraCarreteraD,null,this);
-        this.physics.arcade.overlap(this.coche,this.ladoI,this.fueraCarreteraI,null,this);
+        this.physics.arcade.collide(this.coche,this.vehiculos,this.cocheTocaCoche,null,this);
+
+        if(this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
+            this.score += 5;
+            this.scoreText.setText("Puntuacion: " + this.score);
+
+        }else if(!this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
+
+            this.score -= 10;
+            this.scoreText.setText("Puntuacion: " + this.score);
+
+        }
+
+
 
     }
 
-    private fueraCarreteraI(coche:Phaser.Sprite,ladoI:Phaser.Sprite){
 
-        this.score = this.score - 1;
 
-        this.scoreText.setText("Puntuacion: " + this.score);
+    private irCarretera(coche:Phaser.Sprite, carretera:Phaser.TileSprite) {
 
-    }
-
-    private fueraCarreteraD(coche:Phaser.Sprite, ladoD:Phaser.Sprite) {
-
-        this.score = this.score -1;
-
-        this.scoreText.setText("Puntuacion: " + this.score);
-
-    }
-
-    private irCarretera(coche:Phaser.Sprite, carretera:Phaser.Sprite) {
-
-        this.score = this.score + 1;
+        this.score += 5;
 
         this.scoreText.setText("Puntuacion: " + this.score);
 
@@ -136,7 +134,6 @@ class mainState extends Phaser.State {
 
         var coches = [
             'coche1',
-            'camion',
             'coche2',
             'coche3',
             'pickup1',
@@ -146,9 +143,8 @@ class mainState extends Phaser.State {
         ];
 
         var posiCoche:Point[] = [
-            new Point(this.world.centerX,-20),
-            new Point(this.world.centerX, -50),
-
+            new Point(this.world.centerX - 50,-100),
+            new Point(this.world.centerX + 50,-100),
         ];
 
         var pos = this.rnd.pick(posiCoche);
@@ -157,20 +153,17 @@ class mainState extends Phaser.State {
 
         var random = this.rnd.pick(coches);
 
-        var cocheBajan = new vehiculo(this.game, x, y, random, null);
+        var cocheBajan = new vehiculo(this.game, x,y,random, null);
 
         this.add.existing(cocheBajan);
         this.vehiculos.add(cocheBajan);
 
-        if(this.LIVES==0){
-
-        }
 
     };
 
     private moverCoches(){
 
-        this.vehiculos.setAll("body.velocity.y", 50);
+        this.vehiculos.setAll("body.velocity.y", Math.floor((Math.random() * 150) + 50));
 
     }
     private crearBackground(){
@@ -178,10 +171,9 @@ class mainState extends Phaser.State {
         /*this.carretera = this.add.image(this.world.centerX, this.world.centerY, 'carretera');
          this.carretera.anchor.setTo(0.5, 0.5);*/
 
-
-        this.carretera = this.game.add.tileSprite(0,0,480,450,'carretera');
-        this.ladoI = this.add.sprite(0, 0, 'ladoizquierdo');
-        this.ladoD = this.add.sprite(405, 0, 'ladoderecho');
+        this.ladoI = this.game.add.tileSprite(0,0,198,449, 'ladoizquierdo');
+        this.carretera = this.game.add.tileSprite(198,0,210,450,'carretera');
+        this.ladoD = this.game.add.tileSprite(405,0,192,450, 'ladoderecho');
 
         this.game.physics.enable(this.carretera, Phaser.Physics.ARCADE);
         this.game.physics.enable(this.ladoD, Phaser.Physics.ARCADE);
@@ -195,8 +187,6 @@ class mainState extends Phaser.State {
 
         this.ladoI.body.allowGravity = false;
         this.ladoI.body.immovable = true;
-
-
 
     }
 
@@ -218,9 +208,10 @@ class mainState extends Phaser.State {
 
             this.stateText.text = " GAME OVER \n Click to restart";
             this.stateText.visible = true;
-
+            this.score=0;
             this.input.onTap.addOnce(this.restart, this);
         }
+
 
     }
 
@@ -235,8 +226,9 @@ class mainState extends Phaser.State {
 
     restart() {
         this.score = 0;
-        this.LIVES = 0;
+        this.LIVES = 3;
         this.game.state.restart();
+
     }
 
 
@@ -249,6 +241,7 @@ class mainState extends Phaser.State {
         this.scoreText = this.add.text(this.TEXT_MARGIN, this.TEXT_MARGIN, 'Puntuacion: ' + this.score,
             {font: "30px Arial", fill: "#ffffff"});
         this.scoreText.fixedToCamera = true;
+
         this.livesText = this.add.text(width - this.TEXT_MARGIN, this.TEXT_MARGIN, 'Vidas: ' + this.LIVES,
             {font: "30px Arial", fill: "#ffffff"});
         this.livesText.anchor.setTo(1, 0);
@@ -272,6 +265,7 @@ class mainState extends Phaser.State {
     }
 
     private cocheMover() {
+
         if (this.cursors.left.isDown) {
 
             this.coche.body.acceleration.x = -this.ACCELERATION;
@@ -302,17 +296,6 @@ class mainState extends Phaser.State {
 
 }
 
-class vehiculo extends Phaser.Sprite{
-
-    constructor(game:Phaser.Game, x:number, y:number, key:string|Phaser.RenderTexture|Phaser.BitmapData|PIXI.Texture, frame:string|number) {
-        super(game, x, y, key, frame);
-
-        // Activamos las fisicas
-        this.game.physics.enable(this, Phaser.Physics.ARCADE);
-        this.body.immovable = true;
-        this.body.allowGravity = false;
-    }
-}
 class CarWalk {
 
     game:Phaser.Game;
