@@ -39,8 +39,6 @@ class mainState extends Phaser.State {
 
         this.load.image('camion', 'assets/PNG/camion.png');
         this.load.image('coche1', 'assets/PNG/coches_normales1.png');
-        this.load.image('coche2', 'assets/PNG/coches_normales2.jpg');
-        this.load.image('coche3', 'assets/PNG/coches_normales3.jpg');
         this.load.image('pickup1', 'assets/PNG/coches_pikups1.png');
         this.load.image('pickup2', 'assets/PNG/coches_pikups2.png');
         this.load.image('pickup3', 'assets/PNG/coches_pikups-3.png');
@@ -108,8 +106,6 @@ class mainState extends Phaser.State {
 
         var coches = [
             'coche1',
-            'coche2',
-            'coche3',
             'pickup1',
             'pickup2',
             'pickup3',
