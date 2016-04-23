@@ -1,6 +1,7 @@
 /// <reference path="phaser/phaser.d.ts"/>
 
 import Point = Phaser.Point;
+
 class mainState extends Phaser.State {
 
     private coche:Phaser.Sprite;
@@ -24,7 +25,7 @@ class mainState extends Phaser.State {
     private contador =0;
     private score = 0;
 
-
+//=======================================================================PRELOAD=====================================================================================
     preload():void {
         super.preload();
 
@@ -49,7 +50,7 @@ class mainState extends Phaser.State {
         this.physics.startSystem(Phaser.Physics.ARCADE);
 
     }
-
+//======================================================================================CREATES============================================================================================================
     create():void {
 
         super.create();
@@ -60,73 +61,46 @@ class mainState extends Phaser.State {
         this.createTexts();
         this.game.time.events.loop(Phaser.Timer.SECOND, this.actualizarContador, this);
 
-
-
-
-
         this.physics.enable(this.coche, Phaser.Physics.ARCADE);
         this.cursors = this.input.keyboard.createCursorKeys();
         this.crearVehiculos();
 
-
         //this.carretera = this.add.sprite(this.world.centerX, this.world.centerY, 'carretera');
         //this.carretera.anchor.setTo(0.5, 0.5);
 
-
     }
 
-    update():void {
-        super.update();
-        this.cocheMover();
-        this.colisiones();
-        if(this.contador == 2){
-            this.crearVehiculos();
-            this.contador=0;
-        }
+    private crearCoche(){
 
-        this.moverCoches();
+        this.coche = this.add.sprite(this.world.centerX+50,500, 'coche');
+        this.coche.anchor.setTo(0.5, 0.5);
 
-
-        this.carretera.tilePosition.y += 4;
-        this.ladoD.tilePosition.y += 3;
-        this.ladoI.tilePosition.y += 3;
-
-
+        this.physics.enable(this.coche, Phaser.Physics.ARCADE);
+        this.coche.body.collideWorldBounds = true;
+        this.coche.checkWorldBounds = true;
     }
 
-    private vehiculoConfig(){
+    private crearBackground(){
 
-        this.vehiculos = this.add.group();
-        this.vehiculos.enableBody = true;
+        /*this.carretera = this.add.image(this.world.centerX, this.world.centerY, 'carretera');
+         this.carretera.anchor.setTo(0.5, 0.5);*/
 
-    }
+        this.ladoI = this.game.add.tileSprite(0,0,198,449, 'ladoizquierdo');
+        this.carretera = this.game.add.tileSprite(198,0,210,450,'carretera');
+        this.ladoD = this.game.add.tileSprite(405,0,192,450, 'ladoderecho');
 
-    private colisiones(){
+        this.game.physics.enable(this.carretera, Phaser.Physics.ARCADE);
+        this.game.physics.enable(this.ladoD, Phaser.Physics.ARCADE);
+        this.game.physics.enable(this.ladoI, Phaser.Physics.ARCADE);
 
-        this.physics.arcade.collide(this.coche,this.vehiculos,this.cocheTocaCoche,null,this);
+        this.carretera.body.allowGravity = false;
+        this.carretera.body.immovable = true;
 
-        if(this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
-            this.score += 5;
-            this.scoreText.setText("Puntuacion: " + this.score);
+        this.ladoD.body.allowGravity = false;
+        this.ladoD.body.immovable = true;
 
-        }else if(!this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
-
-            this.score -= 10;
-            this.scoreText.setText("Puntuacion: " + this.score);
-
-        }
-
-
-
-    }
-
-
-
-    private irCarretera(coche:Phaser.Sprite, carretera:Phaser.TileSprite) {
-
-        this.score += 5;
-
-        this.scoreText.setText("Puntuacion: " + this.score);
+        this.ladoI.body.allowGravity = false;
+        this.ladoI.body.immovable = true;
 
     }
 
@@ -161,32 +135,84 @@ class mainState extends Phaser.State {
 
     };
 
+
+    private createTexts() {
+
+        var width = this.scale.bounds.width;
+        var height = this.scale.bounds.height;
+
+        this.scoreText = this.add.text(this.TEXT_MARGIN, this.TEXT_MARGIN, 'Puntuacion: ' + this.score,
+            {font: "30px Arial", fill: "#ffffff"});
+        this.scoreText.fixedToCamera = true;
+
+        this.livesText = this.add.text(width - this.TEXT_MARGIN, this.TEXT_MARGIN, 'Vidas: ' + this.LIVES,
+            {font: "30px Arial", fill: "#ffffff"});
+        this.livesText.anchor.setTo(1, 0);
+        this.livesText.fixedToCamera = true;
+
+        this.stateText = this.add.text(width / 2, height / 2, '', {font: '84px Arial', fill: '#fff'});
+        this.stateText.anchor.setTo(0.5, 0.5);
+        this.stateText.visible = false;
+        this.stateText.fixedToCamera = true;
+
+    };
+
+//==================================================================UPDATES Y ACTUALIZACIONES==============================================================================================
+    update():void {
+        super.update();
+        this.cocheMover();
+
+        if(this.contador == 2){
+            this.crearVehiculos();
+            this.contador=0;
+        }
+
+        this.moverCoches();
+        this.colisiones();
+
+        this.carretera.tilePosition.y += 4;
+        this.ladoD.tilePosition.y += 3;
+        this.ladoI.tilePosition.y += 3;
+
+    }
+
+    private vehiculoConfig(){
+
+        this.vehiculos = this.add.group();
+        this.vehiculos.enableBody = true;
+
+    }
+
+    private colisiones(){
+
+        this.physics.arcade.collide(this.coche,this.vehiculos,this.cocheTocaCoche,null,this);
+
+        if(this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
+            this.score += 5;
+            this.scoreText.setText("Puntuacion: " + this.score);
+
+        }else if(!this.physics.arcade.overlap(this.coche,this.carretera,this.irCarretera,null,this)){
+
+            this.score -= 10;
+            this.scoreText.setText("Puntuacion: " + this.score);
+
+        }
+
+    }
+
+
+    private irCarretera(coche:Phaser.Sprite, carretera:Phaser.TileSprite) {
+
+        this.score += 5;
+
+        this.scoreText.setText("Puntuacion: " + this.score);
+
+    }
+
+
     private moverCoches(){
 
         this.vehiculos.setAll("body.velocity.y", Math.floor((Math.random() * 150) + 50));
-
-    }
-    private crearBackground(){
-
-        /*this.carretera = this.add.image(this.world.centerX, this.world.centerY, 'carretera');
-         this.carretera.anchor.setTo(0.5, 0.5);*/
-
-        this.ladoI = this.game.add.tileSprite(0,0,198,449, 'ladoizquierdo');
-        this.carretera = this.game.add.tileSprite(198,0,210,450,'carretera');
-        this.ladoD = this.game.add.tileSprite(405,0,192,450, 'ladoderecho');
-
-        this.game.physics.enable(this.carretera, Phaser.Physics.ARCADE);
-        this.game.physics.enable(this.ladoD, Phaser.Physics.ARCADE);
-        this.game.physics.enable(this.ladoI, Phaser.Physics.ARCADE);
-
-        this.carretera.body.allowGravity = false;
-        this.carretera.body.immovable = true;
-
-        this.ladoD.body.allowGravity = false;
-        this.ladoD.body.immovable = true;
-
-        this.ladoI.body.allowGravity = false;
-        this.ladoI.body.immovable = true;
 
     }
 
@@ -208,8 +234,8 @@ class mainState extends Phaser.State {
 
             this.stateText.text = " GAME OVER \n Click to restart";
             this.stateText.visible = true;
-            this.score=0;
             this.input.onTap.addOnce(this.restart, this);
+            this.score=0;
         }
 
 
@@ -225,43 +251,10 @@ class mainState extends Phaser.State {
     }
 
     restart() {
+
+        this.game.state.restart();
         this.score = 0;
         this.LIVES = 3;
-        this.game.state.restart();
-
-    }
-
-
-
-   private createTexts() {
-
-        var width = this.scale.bounds.width;
-        var height = this.scale.bounds.height;
-
-        this.scoreText = this.add.text(this.TEXT_MARGIN, this.TEXT_MARGIN, 'Puntuacion: ' + this.score,
-            {font: "30px Arial", fill: "#ffffff"});
-        this.scoreText.fixedToCamera = true;
-
-        this.livesText = this.add.text(width - this.TEXT_MARGIN, this.TEXT_MARGIN, 'Vidas: ' + this.LIVES,
-            {font: "30px Arial", fill: "#ffffff"});
-        this.livesText.anchor.setTo(1, 0);
-        this.livesText.fixedToCamera = true;
-
-        this.stateText = this.add.text(width / 2, height / 2, '', {font: '84px Arial', fill: '#fff'});
-        this.stateText.anchor.setTo(0.5, 0.5);
-        this.stateText.visible = false;
-        this.stateText.fixedToCamera = true;
-
-    };
-
-    private crearCoche(){
-
-        this.coche = this.add.sprite(this.world.centerX+50,500, 'coche');
-        this.coche.anchor.setTo(0.5, 0.5);
-
-        this.physics.enable(this.coche, Phaser.Physics.ARCADE);
-        this.coche.body.collideWorldBounds = true;
-        this.coche.checkWorldBounds = true;
     }
 
     private cocheMover() {
@@ -294,17 +287,6 @@ class mainState extends Phaser.State {
         this.contador++;
     }
 
-}
-
-class CarWalk {
-
-    game:Phaser.Game;
-
-    constructor() {
-        this.game = new Phaser.Game(598, 450, Phaser.AUTO, 'gameDiv');
-        this.game.state.add('main', mainState);
-        this.game.state.start('main');
-    }
 }
 
 window.onload = () => {
